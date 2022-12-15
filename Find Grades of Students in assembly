@@ -1,0 +1,194 @@
+TITLE Find Grade 
+
+
+This program asks the user to enter IDs of students and their integer
+test scores between 0 and 100. The program determines and displays
+the corresponding letter grades based on the following table:
+
+Score Range  Letter Grade
+-------------------------
+90 to 100        A
+76 to  89        B
+60 to  75        C
+0 to   59        F
+ 
+!
+INCLUDE Irvine32.inc
+
+.data
+
+size_prompt BYTE "Enter the class size (between 1 and 20): ",0
+id_prompt BYTE "Enter the ID of the next student (between 1000 and 9999): ",0
+score_prompt BYTE "Enter the score of the next student (between 0 and 100): ",0
+error_msg BYTE "Error! Out of range. Try again.",0
+
+min_size = 1
+max_size = 20
+min_id = 1000
+max_id = 9999
+min_score = 0
+max_score = 100
+
+ids dword max_size Dup(?)
+scores dword max_size Dup(?)
+grades byte max_size Dup(?)
+
+nb_std dword ?	; number of students
+
+heading1 BYTE "Student ID		Letter Grade", 0
+heading2 BYTE "------------------------------------", 0
+spacing1 BYTE "   ",0
+spacing2 BYTE "                       ", 0
+
+
+.code
+main PROC
+
+	call ReadData
+	call FindGrades
+	call Display
+
+	exit
+main ENDP
+
+;------------------------------------------------------------------------------------------
+ReadData PROC
+; This procedure reads all data
+; Receives:	None
+; Returns:
+;			number of students in nb_std
+;			student ids in array ids[]
+;			student scores in array scores[]
+;------------------------------------------------------------------------------------------
+	mov edx, offset size_prompt		; offset of prompt message, input parameter for ReadNumber
+	mov ebx, min_size				; min value, input parameter for ReadNumber
+	mov edi, max_size				; max value, input parameter for ReadNumber
+	call ReadNumber
+	mov  nb_std, eax				; number of students, returned result from ReadNumber
+	mov  ecx, eax					; set the loop counter
+	mov  esi, 0						; esi used for array indexing
+    call crlf
+
+next_student:
+
+	; reading the student id
+	mov edx, offset id_prompt		; prompt for reading ID, input parameter for ReadNumber
+	mov ebx, min_id					; min value, input parameter for ReadNumber
+	mov edi, max_id					; max value, input parameter for ReadNumber
+	call ReadNumber
+	mov  ids[esi*type ids], eax		; student id, returned result from ReadNumber
+
+	; reading the student score
+	mov edx, offset score_prompt	; prompt for reading Score, input parameter for ReadNumber
+	mov ebx, min_score				; min value, input parameter for ReadNumber
+	mov edi, max_score				; max value, input parameter for ReadNumber
+	call ReadNumber
+	mov scores[esi*type scores], eax	; student score, returned result from ReadNumber
+
+	call crlf
+	inc esi
+	loop next_student
+
+	RET
+ReadData ENDP
+
+;------------------------------------------------------------------------------------------
+ReadNumber PROC
+; This procedure reads and validates one integer number
+; Receives:	offset of prompt message in edx
+;			minimum acceptable integer in ebx
+;			maximum acceptable integer in edi
+; Returns:	The entered and validated integer in eax
+;------------------------------------------------------------------------------------------
+
+read_again:
+	call WriteString			; display prompt message
+	call ReadInt				; read number			
+	call Crlf
+	
+	cmp eax, ebx				; compare it with min value
+	jl error
+
+	cmp eax, edi				; compare it with max value
+	jle done
+	
+error:
+	push edx					; save edx, it contains the offset of the prompt message
+	mov edx, offset error_msg
+	call WriteString			; dsiplay error message
+	call crlf
+	pop edx						; restore offset of prompt message into edx
+	jmp read_again
+done:
+	RET
+ReadNumber ENDP
+
+;------------------------------------------------------------------------------------------
+FindGrades PROC
+; This procedure finds the letter grades of all students and stores them in array grades.
+;------------------------------------------------------------------------------------------
+
+	mov  esi, 0						; esi used for array indexing
+	mov ecx, nb_std					; set loop counter
+    call crlf
+
+next_grade:
+	mov eax, scores[esi*type scores]
+	cmp eax, 90						; multiway selection structure to
+	jb checkB	 
+	mov grades[esi*type scores],'A'
+	jmp gradeDone
+checkB:
+	cmp eax, 76
+	jb checkC	 
+	mov grades[esi*type scores],'B'
+	jmp gradeDone
+checkC:
+	cmp eax, 60
+	jb FGrade	 
+	mov grades[esi*type scores],'C'
+	jmp gradeDone
+FGrade:
+	mov grades[esi*type scores],'F'
+gradeDone:
+	inc esi
+	loop next_grade
+	RET
+FindGrades ENDP
+
+;------------------------------------------------------------------------------------------
+Display PROC
+; This procedure displays all student ids and grades in a tabular form
+;------------------------------------------------------------------------------------------
+
+	call crlf
+    mov  edx, offset heading1			; output header 1
+	call WriteString
+	call crlf
+	mov  edx, offset heading2			; output header 2
+	call WriteString
+	call crlf
+	call crlf
+
+    mov  ecx, nb_std			 		; set loop counter
+	mov  esi, 0							; esi used for array indexing
+
+nextLine:
+    mov  edx, offset spacing1			
+	call WriteString
+	mov  eax, ids[esi * type ids]
+	call writeDec						; display student ID
+    mov  edx, offset spacing2			
+	call WriteString
+	mov  al, grades[esi * type scores]
+	call writeChar						; display letter grade
+    call crlf
+	inc esi
+	loop nextLine
+
+    call crlf
+	call crlf
+	RET
+Display ENDP
+
+END main
