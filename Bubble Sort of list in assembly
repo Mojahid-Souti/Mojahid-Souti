@@ -1,0 +1,153 @@
+TITLE BubbleSort Solution                  (BubbleSort.asm)
+
+;---------------------------------------------------------------------------------------
+; Description: This program ask the user to enter N numbers, then store them in array, ;
+;              Applying to the array the bubble sort to display it in descending order ;
+;                                                                                      ;
+; Input: How many number he want to sort                                               ;
+;      : The numbers.                                                                  ;
+;                                                                                      ;
+; Output: Sorted list                                                                  ;
+;                                                                                      ;
+;---------------------------------------------------------------------------------------
+
+INCLUDE Irvine32.inc
+.data
+     number BYTE "How many Numbers do you want to enter: ",0
+     prompt BYTE "Enter an integer number between 1 and 10: ", 0
+     LIST DWORD 10 DUP(? )
+     errorMsg BYTE "Invalid value, It must be between 1 and 10. Try again: ", 0
+     minVal = 1
+     maxVal = 10
+     displayMsg BYTE "The numbers in descending oreder are: ", 0
+     count DWORD ?
+     disde BYTE ";--------------------------------------------------------------------------------------",0
+
+.code
+main PROC
+     mov EDX, OFFSET number
+     call writeString
+     call readInt
+     mov count, EAX                 ;store how many numbers in count
+     call ReadingData
+     call DisplayResult
+     
+
+exit
+main ENDP
+
+;--------------------------------------------------------------------------------
+
+ValidatingInput PROC
+     ;----------------------------------------------------------------------------
+     ;  This procedure recive the numbers from user and validate them            ;
+     ; input:  the numbers                                                       ;
+     ;                                                                           ;
+     ; output: None                                                              ;
+     ;----------------------------------------------------------------------------
+
+Again:
+     call readInt
+     CMP EAX, minVal
+     JL Error
+     CMP EAX, maxVal
+     JLE Done
+Error:
+     mov EDX, OFFSET errorMsg
+     call writeString
+     JMP Again
+
+Done:
+     RET
+ValidatingInput ENDP
+
+;--------------------------------------------------------------------------------
+
+ReadingData PROC 
+     ;----------------------------------------------------------------------------
+     ;  This procedure will read the counting number and the numbers in array    ;
+     ; input: how many numbers                                                   ;
+     ;      : the numbers                                                        ;
+     ; output: save the numbers in array                                         ;
+     ;----------------------------------------------------------------------------
+
+     mov ECX, count
+     mov ESI,0
+
+     L1:
+          mov EDX, OFFSET prompt
+          call writeString
+          call ValidatingInput
+          mov LIST[ESI*TYPE LIST],EAX
+          inc ESI
+          loop L1
+
+ReadingData ENDP
+
+;--------------------------------------------------------------------------------
+
+BubbleSort PROC USES EAX ECX ESI,
+     ;-------------------------------------------------------------
+     ; This procedure will sort the array in descending oreder    ;
+     ; input: addres of the array                                 ;
+     ;      : array size                                          ;
+     ; output: Sorted Array                                       ;
+     ;-------------------------------------------------------------
+
+     mov ECX, count
+     dec ECX
+     L1:
+          push ECX
+          mov ESI, OFFSET LIST
+
+     L2:
+          mov EAX, [ESI]
+          cmp [ESI+4], EAX
+          JL L3
+          xchg EAX, [ESI+4]
+          mov [ESI], EAX
+
+     L3:
+          add ESI, 4
+          loop L2
+
+          pop ECX
+          loop L1
+
+     L4:
+          RET
+
+
+BubbleSort ENDP
+;--------------------------------------------------------------------------------
+
+DisplayResult PROC
+     ;-------------------------------------------------------
+     ; This procedure will display the result on the screen ;
+     ; input: the sorted array                              ;
+     ; output: display on the screen                        ;
+     ;-------------------------------------------------------
+     
+     call BubbleSort
+     mov EDX, OFFSET disde
+     call writeString
+     call Crlf
+     mov EDX, OFFSET displayMsg
+     call writeString
+     call Crlf
+     mov ECX, count
+     mov EDI,0
+     
+     Counting: 
+          mov EAX, LIST[EDI*TYPE LIST]
+          call writeInt
+          call Crlf
+          inc EDI
+          loop Counting
+     RET
+DisplayResult ENDP
+;--------------------------------------------------------------------------------
+
+
+end main
+
