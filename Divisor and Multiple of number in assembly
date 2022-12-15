@@ -1,0 +1,186 @@
+TITLE MASM Template(HW4_132860.asm)
+
+;---------------------------------------------------------------------------------------
+; Description: Program that reads from the keyboard a positive integer N (N > 0)       ;
+;              and finds and displays on the screen all the divisors of N              ;
+;              and all the multiples of N up to 20N.                                   ;
+;                                                                                      ;
+; Input: How many number he want to sort                                               ;
+;      : The numbers.                                                                  ;
+;                                                                                      ;
+; Output: Sorted list                                                                  ;
+;                                                                                      ;
+;                                                                                      ;
+;---------------------------------------------------------------------------------------
+
+INCLUDE Irvine32.inc
+.data
+   prompt1 BYTE "Enter a positive integer N (N > 0): ", 0
+   error1 BYTE "Invalid. It must be positive. Try again.", 0
+   prompt2 BYTE "Do you want another run? (Y/N): ", 0
+   number DWORD ?
+   Multi BYTE "The multiples of the ", 0 
+   Are BYTE " are: ", 0
+   Divis BYTE "The Divisors of the ", 0 
+.code
+main PROC
+    
+   call ReadN  
+   call FindDivisors
+   call Crlf
+   call FindMultiples
+   call AnotherRun
+
+exit
+main ENDP
+
+
+;---------------------------------------------------------------------------------------
+; Description: This procedure asks the user to enter a positive integer N (N > 0) and  ;
+;              reads it. If the user enters an invalid value, it displays the error    ;
+;               message “Invalid. It must be positive. Try again.”, and reads again    ;
+;               until a valid value is entered. It returns the entered valid value     ;
+;              in EAX.                                                                 ;
+;                                                                                      ;
+; Input: positive integer greater than 0                                               ;
+;                                                                                      ;
+; Output: none                                                                         ;                                
+;---------------------------------------------------------------------------------------
+ReadN PROC
+     ; Ask the user to enter a positive integer N (N > 0)
+     mov edx, offset prompt1
+     call WriteString
+     ; Read input value
+     call ReadInt
+     mov number, eax
+
+     ; Check if value is positive
+     cmp number, 0
+     jle ReadNError
+     ret
+     ReadNError:
+          ; Display error message
+          mov edx, offset error1
+          call WriteString
+          call Crlf
+          jmp ReadN
+
+ReadN ENDP
+
+;---------------------------------------------------------------------------------------
+; Description: finds and displays all the divisors of N. You must optimize the loop    ;
+;              to run as efficiently as possible. The value of N is passed to the      ;
+;              procedure in EAX.                                                       ;
+;                                                                                      ;
+; Input: positive integer greater than 0                                               ;
+;                                                                                      ;
+; Output: The divissor of N                                                            ;       
+;---------------------------------------------------------------------------------------
+
+FindDivisors PROC
+    mov edx, offset Divis
+    call writeString
+    mov ebx, 0                  ; Initializing the divisor to 0
+    mov number, eax
+    call writeInt
+    mov edx, offset Are
+    call WriteString
+    call Crlf
+    find_next_divisor:
+         
+         inc ebx                        
+         cmp ebx, number               
+         je done                        
+         mov eax, number
+         mov edx, 0                  ; Clearing the EDX register to prepare for the division
+         div ebx                     ; Dividing EAX by EBX, with the result stored in EAX and the remainder in EDX
+         cmp edx, 0                  ; Checking if there is a remainder
+         jne find_next_divisor       ; If so, the current value of EBX is not a divisor, so trying the next one
+         mov eax, ebx         
+         call writeInt
+         
+                       
+         jmp find_next_divisor            ; Continuing searching for more divisors
+
+     done:
+         mov eax, number
+         call writeInt
+         ret
+
+
+
+FindDivisors ENDP
+
+;---------------------------------------------------------------------------------------
+; Description: calculates and displays on the screen all the multiples of N up to 20N. ;
+;              The value of N is passed to the procedure in EAX.                       ;
+;                                                                                      ;
+; Input: positive integer greater than 0                                               ;
+;                                                                                      ;
+; Output: The multiples of N                                                           ;                    
+;---------------------------------------------------------------------------------------
+
+FindMultiples PROC
+     mov ecx, 1 
+     mov edx, offset Multi
+     call writeString
+     mov number, eax
+     call writeInt
+     mov edx, offset Are
+     call WriteString
+     call Crlf
+
+     Display_multiples:
+         mov eax, number
+         mul ecx 
+         inc ecx
+         call writeInt
+         cmp ecx, 20 
+         jle Display_multiples 
+
+         ret 
+
+FindMultiples ENDP
+
+;---------------------------------------------------------------------------------------
+; Description: asks the user “Do you want another run? (Y/N): ”. If the user enters ‘Y’;
+;              or ‘y’, it returns 1 in the AL register otherwise it returns 0          ; 
+;               in the AL register.                                                    ;
+;                                                                                      ;
+; Input: Y for yes, N for no                                                           ;
+;                                                                                      ;
+; Output: none                                                                         ;                                        
+;---------------------------------------------------------------------------------------
+
+AnotherRun PROC
+prompt:
+    call Crlf
+    mov edx, offset prompt2
+    call WriteString
+    call Crlf
+    call ReadChar
+    call writeChar
+    call Crlf
+    cmp al, 'Y' 
+    je Again 
+
+    cmp al, 'y' 
+    je Again 
+    jmp Cancel
+
+    Again:
+         mov al, 1 
+         call ReadN
+         call FindDivisors
+         call Crlf
+         call FindMultiples
+         jmp prompt
+
+    Cancel:
+         mov al, 0 
+         ret 
+
+AnotherRun ENDP
+
+end main
+
