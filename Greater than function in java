@@ -1,0 +1,15 @@
+public void displayGreaterThan(int value) {
+        Node current = root;
+        //Loop through the tree until no more nodes are found
+        while (current!= null) {
+            if (current.data > value) {
+                //Display the data of the current node
+                System.out.println(current.data);
+                //Move to the right child of the current node
+                current = current.right;
+            } else {
+                //Move to the left child of the current node
+                current = current.left;
+            }
+        }
+    }
